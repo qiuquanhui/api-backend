@@ -3,10 +3,7 @@ package com.hui.api.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hui.api.annotation.AuthCheck;
-import com.hui.api.common.BaseResponse;
-import com.hui.api.common.DeleteRequest;
-import com.hui.api.common.ErrorCode;
-import com.hui.api.common.ResultUtils;
+import com.hui.api.common.*;
 import com.hui.api.constant.CommonConstant;
 import com.hui.api.exception.BusinessException;
 import com.hui.api.model.dto.interfaceInfo.InterfaceInfoAddRequest;
@@ -14,8 +11,10 @@ import com.hui.api.model.dto.interfaceInfo.InterfaceInfoQueryRequest;
 import com.hui.api.model.dto.interfaceInfo.InterfaceInfoUpdateRequest;
 import com.hui.api.model.entity.InterfaceInfo;
 import com.hui.api.model.entity.User;
+import com.hui.api.model.enums.InterfaceInfoStatusEnum;
 import com.hui.api.service.InterfaceInfoService;
 import com.hui.api.service.UserService;
+import com.hui.apiclient.client.ApiClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -40,6 +39,9 @@ public class InterfaceInfoController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private ApiClient apiClient;
 
     // region 增删改查
 
@@ -195,5 +197,85 @@ public class InterfaceInfoController {
     }
 
     // endregion
+
+
+    /**
+     * 上线
+     *
+     * @param idRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/online")
+    @AuthCheck(mustRole = "admin")
+    public BaseResponse<Boolean> onlineInterfaceInfo(@RequestBody IdRequest idRequest,
+                                                     HttpServletRequest request) {
+
+     //   1. 校验该接口是否存在
+        if (idRequest == null || idRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        InterfaceInfo OldinterfaceInfo = interfaceInfoService.getById(idRequest.getId());
+        if (OldinterfaceInfo == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+
+     //   2. 判断该接口是否可以调用
+        if (OldinterfaceInfo.getStatus() == 1) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "接口已上线");
+        }
+
+        com.hui.apiclient.model.User user = new com.hui.apiclient.model.User();
+        user.setName("hui");
+        String userName = apiClient.getUserNameByPost(user);
+        if (StringUtils.isBlank(userName)) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"接口调用失败");
+        }
+
+       // 3. 修改接口数据库的状态字段
+        InterfaceInfo interfaceInfo = new InterfaceInfo();
+        interfaceInfo.setId(idRequest.getId());
+        interfaceInfo.setStatus(InterfaceInfoStatusEnum.online.getValue());
+        boolean result = interfaceInfoService.updateById(interfaceInfo);
+
+        return ResultUtils.success(result);
+    }
+    /**
+     * 下线
+     *
+     * @param idRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/offline")
+    public BaseResponse<Boolean> offlineInterfaceInfo(@RequestBody IdRequest idRequest,
+                                                     HttpServletRequest request) {
+
+
+        //   1. 校验该接口是否存在
+        if (idRequest == null || idRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        InterfaceInfo OldInterfaceInfo = interfaceInfoService.getById(idRequest.getId());
+        if (OldInterfaceInfo == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+
+        //   2. 判断该接口是否已下线
+        if (OldInterfaceInfo.getStatus() == 1) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "接口已下线");
+        }
+
+        // 3. 修改接口数据库的状态字段
+        InterfaceInfo interfaceInfo = new InterfaceInfo();
+        interfaceInfo.setId(idRequest.getId());
+        interfaceInfo.setStatus(InterfaceInfoStatusEnum.offLine.getValue());
+        boolean result = interfaceInfoService.updateById(interfaceInfo);
+
+        return ResultUtils.success(result);
+    }
+
 
 }
