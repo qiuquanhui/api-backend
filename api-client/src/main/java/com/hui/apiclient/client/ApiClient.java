@@ -42,7 +42,7 @@ public class ApiClient {
         HashMap<String, Object> paramMap = new HashMap<>();
         paramMap.put("name", name);
 
-        String result= HttpUtil.get("http://localhost:8080/basic/", paramMap);
+        String result= HttpUtil.get("http://localhost:8123/basic/", paramMap);
 
         System.out.println(result);
 
@@ -54,7 +54,7 @@ public class ApiClient {
         HashMap<String, Object> paramMap = new HashMap<>();
         paramMap.put("name", name);
 
-        String result= HttpUtil.post("http://localhost:8080/basic/", paramMap);
+        String result= HttpUtil.post("http://localhost:8123/basic/", paramMap);
 
         System.out.println(result);
 
@@ -84,7 +84,7 @@ public class ApiClient {
         //获取请求头
         Map<String, String> header = getHeader(json);
         //发起请求
-        HttpResponse response = HttpRequest.post("http://localhost:8080/basic/user")
+        HttpResponse response = HttpRequest.post("http://localhost:8123/basic/user")
                 .addHeaders(header)
                 .body(json)
                 .execute();
