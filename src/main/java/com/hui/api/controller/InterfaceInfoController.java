@@ -2,11 +2,13 @@ package com.hui.api.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.gson.Gson;
 import com.hui.api.annotation.AuthCheck;
 import com.hui.api.common.*;
 import com.hui.api.constant.CommonConstant;
 import com.hui.api.exception.BusinessException;
 import com.hui.api.model.dto.interfaceInfo.InterfaceInfoAddRequest;
+import com.hui.api.model.dto.interfaceInfo.InterfaceInfoInvokeRequest;
 import com.hui.api.model.dto.interfaceInfo.InterfaceInfoQueryRequest;
 import com.hui.api.model.dto.interfaceInfo.InterfaceInfoUpdateRequest;
 import com.hui.api.model.entity.InterfaceInfo;
@@ -222,7 +224,7 @@ public class InterfaceInfoController {
         }
 
      //   2. 判断该接口是否可以调用
-        if (OldinterfaceInfo.getStatus() == 1) {
+        if (OldinterfaceInfo.getStatus() == InterfaceInfoStatusEnum.online.getValue()) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "接口已上线");
         }
 
@@ -232,6 +234,7 @@ public class InterfaceInfoController {
         if (StringUtils.isBlank(userName)) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"接口调用失败");
         }
+
 
        // 3. 修改接口数据库的状态字段
         InterfaceInfo interfaceInfo = new InterfaceInfo();
@@ -264,7 +267,7 @@ public class InterfaceInfoController {
         }
 
         //   2. 判断该接口是否已下线
-        if (OldInterfaceInfo.getStatus() == 1) {
+        if (OldInterfaceInfo.getStatus() == InterfaceInfoStatusEnum.offLine.getValue()) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "接口已下线");
         }
 
@@ -277,5 +280,48 @@ public class InterfaceInfoController {
         return ResultUtils.success(result);
     }
 
+    /**
+     * 调用
+     *
+     * @param interfaceInfoInvokeRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/invoke")
+    public BaseResponse<Object> invokeInterfaceInfo(@RequestBody InterfaceInfoInvokeRequest interfaceInfoInvokeRequest,
+                                                      HttpServletRequest request) {
 
+
+        //   1. 校验该接口是否存在
+        if (interfaceInfoInvokeRequest == null || interfaceInfoInvokeRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        InterfaceInfo OldInterfaceInfo = interfaceInfoService.getById(interfaceInfoInvokeRequest.getId());
+        if (OldInterfaceInfo == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+
+        //   2. 判断该接口是否已下线
+        if (OldInterfaceInfo.getStatus() == InterfaceInfoStatusEnum.offLine.getValue()) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "接口已下线");
+        }
+
+        // 3. 后端调用模拟接口
+        //使用当前用户的ak，sk
+        User loginUser = userService.getLoginUser(request);
+        String accessKey = loginUser.getAccessKey();
+        String secretKey = loginUser.getSecretKey();
+        //使用的管理员的接口ak,sk
+        //todo 改为当前用户的ak，sk
+        ApiClient apiClient = new ApiClient("hui", "abcdefg");
+        //处理请求参数
+        String requestParams = interfaceInfoInvokeRequest.getUserRequestParams();
+        Gson gson = new Gson();
+        com.hui.apiclient.model.User user = gson.fromJson(requestParams, com.hui.apiclient.model.User.class);
+        //todo 改为真的调用的接口
+        String userName = apiClient.getUserNameByPost(user);
+
+        return ResultUtils.success(userName);
+    }
 }
