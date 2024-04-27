@@ -31,15 +31,19 @@ import static com.hui.apiclient.utils.SignUtil.getSign;
 @RequestMapping("/basic")
 public class BasicController {
 
-    @GetMapping("/")
-    public String getnameByGet(String name) {
-
-        return "get " + name;
+    @GetMapping("/get")
+    public String getnameByGet(String name, HttpServletRequest request) {
+        String source= request.getHeader("source");
+        System.out.println(source);
+        if (!source.equals("hui")){
+            throw new RuntimeException("用户无权限");
+        }
+        return "GET 方法，用户的名称是： " + name;
     }
 
-    @PostMapping("/")
+    @PostMapping("/post")
     public String getnameByPost(@RequestParam String name) {
-        return "post " + name;
+        return "POST 方法，用户的名称是： " + name;
     }
 
     @PostMapping("/user")
@@ -75,7 +79,7 @@ public class BasicController {
         }
 
 
-        return "post " + user.getName();
+        return "POST 方法,实体类用户的名称为： " + user.getName();
 
     }
 
