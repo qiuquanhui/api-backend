@@ -26,6 +26,7 @@ public class ApiClient {
 
     private String secretKey;
 
+    private static final String GATEWAY_HOST = "http://127.0.0.1:8090";
 
 
     public ApiClient(String accessKey, String secretKey) {
@@ -42,7 +43,7 @@ public class ApiClient {
         HashMap<String, Object> paramMap = new HashMap<>();
         paramMap.put("name", name);
 
-        String result= HttpUtil.get("http://localhost:8123/basic/", paramMap);
+        String result= HttpUtil.get(GATEWAY_HOST + "/api/basic/get", paramMap);
 
         System.out.println(result);
 
@@ -54,7 +55,7 @@ public class ApiClient {
         HashMap<String, Object> paramMap = new HashMap<>();
         paramMap.put("name", name);
 
-        String result= HttpUtil.post("http://localhost:8123/basic/", paramMap);
+        String result= HttpUtil.post(GATEWAY_HOST + "/api/basic/post", paramMap);
 
         System.out.println(result);
 
@@ -69,6 +70,9 @@ public class ApiClient {
         //参数 2 用户参数
         header.put("body",body);
         //参数 3 sign 签名认证
+        if (body == null){
+            body = "";
+        }
         header.put("sign",getSign(body, secretKey));
         //参数 4 nonce 随机数
         header.put("nonce", RandomUtil.randomString(5));
@@ -84,7 +88,7 @@ public class ApiClient {
         //获取请求头
         Map<String, String> header = getHeader(json);
         //发起请求
-        HttpResponse response = HttpRequest.post("http://localhost:8123/basic/user")
+        HttpResponse response = HttpRequest.post(GATEWAY_HOST + "/api/basic/user")
                 .addHeaders(header)
                 .body(json)
                 .execute();
