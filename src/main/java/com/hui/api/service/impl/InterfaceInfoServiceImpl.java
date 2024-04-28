@@ -4,15 +4,15 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hui.api.common.ErrorCode;
 import com.hui.api.exception.BusinessException;
 import com.hui.api.mapper.InterfaceInfoMapper;
-import com.hui.api.model.entity.InterfaceInfo;
 import com.hui.api.service.InterfaceInfoService;
+import com.hui.common.model.entity.InterfaceInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
 /**
-* @author 邱权辉
+* @author quanhui
 * @description 针对表【interface_info(接口信息)】的数据库操作Service实现
 * @createDate 2024-04-16 16:55:02
 */

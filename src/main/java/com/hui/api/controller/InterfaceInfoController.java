@@ -11,12 +11,12 @@ import com.hui.api.model.dto.interfaceInfo.InterfaceInfoAddRequest;
 import com.hui.api.model.dto.interfaceInfo.InterfaceInfoInvokeRequest;
 import com.hui.api.model.dto.interfaceInfo.InterfaceInfoQueryRequest;
 import com.hui.api.model.dto.interfaceInfo.InterfaceInfoUpdateRequest;
-import com.hui.api.model.entity.InterfaceInfo;
-import com.hui.api.model.entity.User;
 import com.hui.api.model.enums.InterfaceInfoStatusEnum;
 import com.hui.api.service.InterfaceInfoService;
 import com.hui.api.service.UserService;
 import com.hui.apiclient.client.ApiClient;
+import com.hui.common.model.entity.InterfaceInfo;
+import com.hui.common.model.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -312,9 +312,8 @@ public class InterfaceInfoController {
         User loginUser = userService.getLoginUser(request);
         String accessKey = loginUser.getAccessKey();
         String secretKey = loginUser.getSecretKey();
-        //使用的管理员的接口ak,sk
-        //todo 改为当前用户的ak，sk
-        ApiClient apiClient = new ApiClient("hui", "abcdefg");
+        // 改为当前用户的ak，sk
+        ApiClient apiClient = new ApiClient(accessKey, secretKey);
         //处理请求参数
         String requestParams = interfaceInfoInvokeRequest.getUserRequestParams();
         Gson gson = new Gson();

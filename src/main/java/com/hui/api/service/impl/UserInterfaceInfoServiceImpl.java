@@ -5,14 +5,14 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hui.api.common.ErrorCode;
 import com.hui.api.exception.BusinessException;
 import com.hui.api.mapper.UserInterfaceInfoMapper;
-import com.hui.api.model.entity.UserInterfaceInfo;
 import com.hui.api.service.UserInterfaceInfoService;
+import com.hui.common.model.entity.UserInterfaceInfo;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
 /**
- * @author 邱权辉
+ * @author quanhui
  * @description 针对表【user_interface_info(用户调用接口关系)】的数据库操作Service实现
  * @createDate 2024-04-23 17:04:24
  */

@@ -1,6 +1,6 @@
 package com.hui.api.service;
 
-import com.hui.api.model.entity.User;
+import com.hui.common.model.entity.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

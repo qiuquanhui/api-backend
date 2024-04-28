@@ -1,7 +1,13 @@
 package com.hui.apigateway;
 
 
+import com.hui.common.model.entity.InterfaceInfo;
+import com.hui.common.model.entity.User;
+import com.hui.common.service.InnerInterfaceInfoService;
+import com.hui.common.service.InnerUserInterfaceInfoService;
+import com.hui.common.service.InnerUserService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.reactivestreams.Publisher;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -30,8 +36,19 @@ import static com.hui.apiclient.utils.SignUtil.getSign;
 @Slf4j
 public class CustomGlobalFilter implements GlobalFilter, Ordered {
 
+    @DubboReference
+    private InnerInterfaceInfoService innerInterfaceInfoService;
+
+    @DubboReference
+    private InnerUserService innerUserService;
+
+    @DubboReference
+    private InnerUserInterfaceInfoService innerUserInterfaceInfoService;
+
     //白名单
     private static final List<String> IP_WHITE_LIST = Arrays.asList("127.0.0.1");
+
+    private static final String INTERFACE_HOST = "http://localhost:8123";
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -41,15 +58,15 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         String id = request.getId();
         log.info("请求标识, id: {}", id);
         log.info("请求路径, path: {}", request.getPath()); ///api/basic/get
-        log.info("请求方法, method: {}", request.getMethod());
+        log.info("请求方法, method: {}", request.getMethod());//POST
         log.info("请求参数, params: {}", request.getQueryParams());// {name=[hui]}
         String hostName = request.getLocalAddress().getHostString();
         log.info("请求主机名, hostName: {}", hostName);
-        log.info("请求本地地址,localAddress：{}",request.getLocalAddress()); //127.0.0.1:8090
-        log.info("请求远程地址,remoteAddress：{}",request.getRemoteAddress());//127.0.0.1:58610
+        log.info("请求本地地址,localAddress：{}", request.getLocalAddress()); //127.0.0.1:8090
+        log.info("请求远程地址,remoteAddress：{}", request.getRemoteAddress());//127.0.0.1:58610
         ServerHttpResponse response = exchange.getResponse();
 //        2. （黑白名单）
-        if (!IP_WHITE_LIST.contains(hostName)){
+        if (!IP_WHITE_LIST.contains(hostName)) {
             return handlerNoAuth(response);
         }
 //        3. 用户鉴权（判断 ak、sk 是否合法等等）
@@ -61,41 +78,56 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
         String timestamp = headers.getFirst("timestamp"); //时间戳,转递以秒为单位
 
         //服务端签名认证校验
-        //todo 参数1 实际中从数据库中查询是否有该数据
-        if (!"hui".equals(accessKey)){
+        //参数1  从数据库中查询是否有该数据
+        User invokeUser = null;
+        try {
+            invokeUser = innerUserService.getUserByAcccessKey(accessKey);
+        } catch (Exception e) {
+            return handlerNoAuth(response);
+        }
+
+        if (invokeUser == null) {
             return handlerNoAuth(response);
         }
 
         //todo 随机数怎么校验：后端传递随机数给前端，查询数据校验，判断该随机数是否使用过。
-        if (nonce.length() > 1000){
+        if (nonce.length() > 1000) {
             return handlerNoAuth(response);
         }
 
         //参数 3  校验sign
-        String secretKey = "abcdefg";  //todo 实际中从数据库中查询
+        String secretKey = invokeUser.getSecretKey();// 从数据库中查询
         String serverSign = getSign(body, secretKey);
-        if (!serverSign.equals(sign)){
+        if (sign == null || !serverSign.equals(sign)) {
             return handlerNoAuth(response);
         }
 
         //时间戳校验,五分钟以后的就不可以调用 1秒等于1000毫秒
         long currentTimeMillis = System.currentTimeMillis() / 1000;
         long FIVE_MINUTE = 5 * 60L;
-        if (currentTimeMillis - Long.parseLong(timestamp) > FIVE_MINUTE ){
+        if (currentTimeMillis - Long.parseLong(timestamp) > FIVE_MINUTE) {
             return handlerNoAuth(response);
         }
 
 //        5-6会先执行才会到handlerResponse中执行7-9
-//        5. todo 实际从数据库中查询 请求的模拟接口是否存在？
-//        6. todo  请求转发，调用模拟接口
-        // 以下操作都在响应日志中调用
-//        7. 响应日志
-//        8. todo  调用成功，接口调用次数 + 1
-//        9. 调用失败，返回一个规范的错误码
-        return handlerResponse(exchange,chain);
+//        5.  实际从数据库中查询 请求的模拟接口是否存在？
+        String path = INTERFACE_HOST + request.getPath().value();
+        String method = request.getMethod().name();
+        InterfaceInfo interfaceInfo = null;
+        try {
+            interfaceInfo = innerInterfaceInfoService.isOKInterfaceInfo(path, method);
+        } catch (Exception e) {
+            return handlerNoAuth(response);
+        }
+        if (interfaceInfo == null) {
+            return handlerNoAuth(response);
+        }
+        //todo 6 查询该用户是否还有调用次数
+//        7.请求转发，调用模拟接口
+        return handlerResponse(exchange, chain, interfaceInfo.getId(), invokeUser.getId());
     }
 
-    public Mono<Void> handlerResponse(ServerWebExchange exchange, GatewayFilterChain chain){
+    public Mono<Void> handlerResponse(ServerWebExchange exchange, GatewayFilterChain chain, long interfaceInfoId, long userId) {
         try {
             //从交换机中拿到响应对象
             ServerHttpResponse originalResponse = exchange.getResponse();
@@ -111,15 +143,18 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
                         Flux<? extends DataBuffer> fluxBody = Flux.from(body);
 
                         return super.writeWith(fluxBody.buffer().map(dataBuffers -> {
-                            //        7. todo  调用成功，接口调用次数 + 1
-
+                            //        7. 调用成功，接口调用次数 + 1
+                            try {
+                                innerUserInterfaceInfoService.invokeCount(interfaceInfoId, userId);
+                            }catch (Exception e){
+                                log.info("invokeCount error ",e);
+                            }
                             // 合并多个流集合，解决返回体分段传输
                             DataBufferFactory dataBufferFactory = new DefaultDataBufferFactory();
                             DataBuffer buff = dataBufferFactory.join(dataBuffers);
                             byte[] content = new byte[buff.readableByteCount()];
                             buff.read(content);
                             DataBufferUtils.release(buff);//释放掉内存
-
                             // 构建返回日志
                             String data = new String(content);
                             List<Object> rspArgs = new ArrayList<>();
@@ -141,6 +176,7 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange.mutate().response(decoratedResponse).build());
 
         } catch (Exception e) {
+            //        9. 调用失败，返回一个规范的错误码
             log.error("网关处理响应异常" + e);
             return chain.filter(exchange);
         }

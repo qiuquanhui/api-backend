@@ -1,10 +1,10 @@
 package com.hui.api.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.hui.api.model.entity.UserInterfaceInfo;
+import com.hui.common.model.entity.UserInterfaceInfo;
 
 /**
-* @author 邱权辉
+* @author quanhui
 * @description 针对表【user_interface_info(用户调用接口关系)】的数据库操作Service
 * @createDate 2024-04-23 17:04:24
 */
