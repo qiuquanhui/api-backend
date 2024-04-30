@@ -2,6 +2,7 @@
 
 ## 项目设计
 ![img.png](img.png)
+
 参考：搏天api
 
 ## 项目介绍
@@ -23,12 +24,16 @@ API Platforn ，提供后端 API 接口的平台，用户可以注册登录，�
 ![img_1.png](img_1.png)
 
 ## 技术选型
+
 后端
-● Spring Boot
-● Spring boot Starter （SDK开发）
-● Dubbo (RPC)
-● Nacos
-● Spring Cloud Gateway (网关，限流，日志实现等)
+
+* Spring Boot
+* Spring boot Starter （SDK开发）
+* Dubbo (RPC)
+* Nacos 
+* Spring Cloud Gateway (网关，限流，日志实现等)
+* MySQL
+* JDK8
 
 ## 数据库设计
 
