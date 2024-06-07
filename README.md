@@ -1,6 +1,6 @@
 # API Platform
 
-详细可点-》[项目笔记](https://www.yuque.com/guangjun-0q7tw/sy4yod/rvn0cyqy20u2cw8h)
+[详细可点-》》》 万字----项目笔记](https://www.yuque.com/guangjun-0q7tw/sy4yod/rvn0cyqy20u2cw8h)
 
 ## 项目设计
 ![img.png](img.png)
