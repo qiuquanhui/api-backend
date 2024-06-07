@@ -42,11 +42,12 @@ public class AnalysisController {
     @AuthCheck(mustRole = "admin")
     public BaseResponse<List<UserInterfaceInfoVO>> getTopInvokeInterfaceInfo() {
         List<UserInterfaceInfo> userInterfaceInfos = userInterfaceInfoMapper.ListTopInvokeInterfaceInfo(3);
-
+        //查询出userInterface 调用最高的3个接口
         Map<Long, List<UserInterfaceInfo>> interfaceInfoIdObjMap = userInterfaceInfos.stream().collect(Collectors.groupingBy(UserInterfaceInfo::getInterfaceInfoId));
 
         QueryWrapper<InterfaceInfo> interfaceInfoQueryWrapper = new QueryWrapper<>();
         interfaceInfoQueryWrapper.in("id", interfaceInfoIdObjMap.keySet());
+        //根据id查询出相应的接口信息。
         List<InterfaceInfo> interfaceInfos = interfaceInfoMapper.selectList(interfaceInfoQueryWrapper);
         List<UserInterfaceInfoVO> userInterfaceInfoVOS = interfaceInfos.stream().map(interfaceInfo -> {
             UserInterfaceInfoVO userInterfaceInfoVO = new UserInterfaceInfoVO();
