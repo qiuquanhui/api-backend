@@ -45,7 +45,6 @@ public class InterfaceInfoController {
     @Resource
     private ApiClient apiClient;
 
-    // region 增删改查
 
     /**
      * 创建
