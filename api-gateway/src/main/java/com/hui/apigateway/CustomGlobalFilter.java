@@ -46,9 +46,9 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
     private InnerUserInterfaceInfoService innerUserInterfaceInfoService;
 
     //白名单
-    private static final List<String> IP_WHITE_LIST = Arrays.asList("127.0.0.1");
+    private static final List<String> IP_WHITE_LIST = Arrays.asList("127.0.0.1");  // 白名单
 
-    private static final String INTERFACE_HOST = "http://localhost:8123";
+    private static final String INTERFACE_HOST = "http://localhost:8123"; //实际调用接口
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -123,6 +123,8 @@ public class CustomGlobalFilter implements GlobalFilter, Ordered {
             return handlerNoAuth(response);
         }
         //todo 6 查询该用户是否还有调用次数
+
+        //请求头中加入系统表示
 //        7.请求转发，调用模拟接口
         return handlerResponse(exchange, chain, interfaceInfo.getId(), invokeUser.getId());
     }
