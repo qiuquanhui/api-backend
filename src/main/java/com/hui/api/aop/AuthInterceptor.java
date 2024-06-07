@@ -41,8 +41,8 @@ public class AuthInterceptor {
      * @param authCheck
      * @return
      */
-    @Around("@annotation(authCheck)")
-    public Object doInterceptor(ProceedingJoinPoint joinPoint, AuthCheck authCheck) throws Throwable {
+    @Around("@annotation(authCheck)") //环绕通知，注解
+    public Object doInterceptor(ProceedingJoinPoint joinPoint, AuthCheck authCheck) throws Throwable {//参数：pjp,注解
         List<String> anyRole = Arrays.stream(authCheck.anyRole()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         String mustRole = authCheck.mustRole();
         RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
@@ -53,14 +53,14 @@ public class AuthInterceptor {
         if (CollectionUtils.isNotEmpty(anyRole)) {
             String userRole = user.getUserRole();
             if (!anyRole.contains(userRole)) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);  //错误码
             }
         }
         // 必须有所有权限才通过
         if (StringUtils.isNotBlank(mustRole)) {
             String userRole = user.getUserRole();
             if (!mustRole.equals(userRole)) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR); //错误码
             }
         }
         // 通过权限校验，放行
