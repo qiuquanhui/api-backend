@@ -3,7 +3,7 @@
 [详细可点-》》》 万字----项目笔记](https://www.yuque.com/guangjun-0q7tw/sy4yod/rvn0cyqy20u2cw8h)
 
 ## 项目设计
-![img.png](img.png)
+![image-20240620191105006](https://images-1314004726.cos.ap-guangzhou.myqcloud.com/test/202406201911174.png)
 
 参考：搏天api
 
@@ -23,7 +23,7 @@ API Platforn ，提供后端 API 接口的平台，用户可以注册登录，�
 
 具体流程如下图
 
-![img_1.png](img_1.png)
+![img_1.png](https://images-1314004726.cos.ap-guangzhou.myqcloud.com/test/202406201911747.png)
 
 ## 技术选型
 
